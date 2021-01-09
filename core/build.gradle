@@ -1,0 +1,59 @@
+plugins {
+    id "fabric-loom" version "0.5-SNAPSHOT"
+    id "org.jetbrains.kotlin.jvm" version "1.4.21"
+    id "java"
+    id "maven-publish"
+}
+
+group = "${maven_group}"
+version = "${mod_version}"
+
+repositories {
+    maven {
+        name = "SpongePowered"
+        url = "http://repo.spongepowered.org/maven/"
+    }
+}
+
+minecraft.remapMod = true
+
+dependencies {
+    minecraft("com.mojang:minecraft:${project.minecraft_version}")
+    mappings fileTree(dir: "mappings", include: "**.jar")
+    // mappings "net.fabricmc:yarn:1.16.4+build.6:v2"
+
+    // Depend on mixin for the annotations only
+    compileOnly("org.spongepowered:mixin:0.8.2")
+}
+
+compileJava {
+    // Prevent mixin from getting registered as an annotation processor
+    // which causes java.lang.NoClassDefFoundError: org/objectweb/asm/tree/MethodNode
+    options.compilerArgs << "-proc:none"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            // add all the jars that should be included when publishing to maven
+            artifact(remapJar) {
+                builtBy remapJar
+            }
+            artifact(jar) {
+                classifier = "dev"
+                builtBy jar
+            }
+        }
+    }
+}
+
+// Do not create fabric run configurations,
+// we have a separate fabric project for that
+loom {
+    autoGenIDERuns = false
+}
+
+repositories {
+    mavenCentral()
+}
+
